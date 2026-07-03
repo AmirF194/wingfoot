@@ -1,5 +1,9 @@
 # botpass
 
+[![CI](https://github.com/AmirF194/botpass/actions/workflows/ci.yml/badge.svg)](https://github.com/AmirF194/botpass/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+![Python](https://img.shields.io/badge/python-3.9%2B-blue)
+
 Verified-bot identity for AI agents, using Web Bot Auth (a profile of
 [RFC 9421](https://www.rfc-editor.org/info/rfc9421/) HTTP Message Signatures).
 
@@ -14,8 +18,12 @@ it up by hand is fiddly, and a failed signature usually just returns `403` with 
 
 ## Install
 
+Not on PyPI yet, so install from source:
+
 ```bash
-pip install botpass
+git clone https://github.com/AmirF194/botpass
+cd botpass
+pip install -e .
 botpass demo
 ```
 
