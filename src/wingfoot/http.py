@@ -1,4 +1,4 @@
-"""Tiny stdlib HTTP helpers so botpass has no runtime deps beyond `cryptography`."""
+"""Tiny stdlib HTTP helpers so wingfoot has no runtime deps beyond `cryptography`."""
 from __future__ import annotations
 
 import json

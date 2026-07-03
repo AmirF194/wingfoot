@@ -1,19 +1,19 @@
 """Drop-in Web Bot Auth signing for the HTTP clients people already use.
 
-Signing becomes one line: hand a botpass auth object to `requests` or `httpx` and
+Signing becomes one line: hand a wingfoot auth object to `requests` or `httpx` and
 every outbound request carries a valid Web Bot Auth signature.
 
-    import requests, botpass
-    requests.get("https://example.com/", auth=botpass.requests_auth())
+    import requests, wingfoot
+    requests.get("https://example.com/", auth=wingfoot.requests_auth())
 
-    import httpx, botpass
-    httpx.get("https://example.com/", auth=botpass.httpx_auth())
+    import httpx, wingfoot
+    httpx.get("https://example.com/", auth=wingfoot.httpx_auth())
 
-These integrations are optional: botpass itself needs only `cryptography`. `requests`
+These integrations are optional: wingfoot itself needs only `cryptography`. `requests`
 and `httpx` are imported lazily, so importing this module never pulls them in.
 
-By default the identity created by `botpass init` is used. Pass `identity=` to sign
-with a specific one (e.g. `botpass.keys.ephemeral_identity(url)` in tests).
+By default the identity created by `wingfoot init` is used. Pass `identity=` to sign
+with a specific one (e.g. `wingfoot.keys.ephemeral_identity(url)` in tests).
 """
 from __future__ import annotations
 
@@ -29,7 +29,7 @@ def _resolve_identity(identity: Optional[Identity]) -> Identity:
     loaded = load_identity()
     if loaded is None:
         raise RuntimeError(
-            "no botpass identity found — run `botpass init --agent <url>` first, "
+            "no wingfoot identity found — run `wingfoot init --agent <url>` first, "
             "or pass identity=... explicitly."
         )
     return loaded
@@ -71,10 +71,10 @@ def httpx_auth(identity: Optional[Identity] = None, **sign_kwargs):
     """
     import httpx
 
-    class _BotpassAuth(httpx.Auth):
+    class _WingfootAuth(httpx.Auth):
         def auth_flow(self, request):
             for name, value in signed_headers(str(request.url), identity, **sign_kwargs).items():
                 request.headers[name] = value
             yield request
 
-    return _BotpassAuth()
+    return _WingfootAuth()

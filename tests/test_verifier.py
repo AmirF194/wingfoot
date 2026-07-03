@@ -1,8 +1,8 @@
 """End-to-end: the reference verifier really returns 403 unsigned, 200 signed."""
-from botpass import http as _http
-from botpass.keys import ephemeral_identity
-from botpass.rfc9421 import sign_request
-from botpass.verifier import demo, start_verifier
+from wingfoot import http as _http
+from wingfoot.keys import ephemeral_identity
+from wingfoot.rfc9421 import sign_request
+from wingfoot.verifier import demo, start_verifier
 
 
 def test_demo_flips_403_to_200():

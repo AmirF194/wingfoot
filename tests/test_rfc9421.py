@@ -1,8 +1,8 @@
 """RFC 9421 / Web Bot Auth signing + verification round-trips."""
 import time
 
-from botpass.keys import ephemeral_identity, generate_private_key, keyid_for
-from botpass.rfc9421 import (
+from wingfoot.keys import ephemeral_identity, generate_private_key, keyid_for
+from wingfoot.rfc9421 import (
     authority_of,
     build_signature_base,
     parse_signature,

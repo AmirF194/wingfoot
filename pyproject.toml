@@ -3,7 +3,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "botpass"
+name = "wingfoot"
 version = "0.1.0"
 description = "Verified-bot identity for AI agents (Web Bot Auth / RFC 9421), with a doctor that reports why a request was blocked."
 readme = "README.md"
@@ -27,11 +27,11 @@ httpx = ["httpx>=0.23"]
 test = ["pytest>=7", "requests>=2", "httpx>=0.23"]
 
 [project.urls]
-Homepage = "https://github.com/AmirF194/botpass"
-Issues = "https://github.com/AmirF194/botpass/issues"
+Homepage = "https://github.com/AmirF194/wingfoot"
+Issues = "https://github.com/AmirF194/wingfoot/issues"
 
 [project.scripts]
-botpass = "botpass.cli:main"
+wingfoot = "wingfoot.cli:main"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/botpass"]
+packages = ["src/wingfoot"]

@@ -66,10 +66,10 @@ def keyid_for(public_key: Ed25519PublicKey) -> str:
 
 
 # ---------------------------------------------------------------------------
-# On-disk identity (persisted by `botpass init`, loaded by sign/doctor)
+# On-disk identity (persisted by `wingfoot init`, loaded by sign/doctor)
 # ---------------------------------------------------------------------------
 
-DEFAULT_HOME = Path.home() / ".botpass"
+DEFAULT_HOME = Path.home() / ".wingfoot"
 
 
 @dataclass

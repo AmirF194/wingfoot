@@ -1,15 +1,15 @@
-# Contributing to botpass
+# Contributing to wingfoot
 
 Thanks for helping. This is a young project and there is plenty of low-hanging fruit.
 
 ## Setup
 
 ```bash
-git clone https://github.com/AmirF194/botpass
-cd botpass
+git clone https://github.com/AmirF194/wingfoot
+cd wingfoot
 pip install -e ".[test]"
 pytest
-botpass demo
+wingfoot demo
 ```
 
 ## Ground rules

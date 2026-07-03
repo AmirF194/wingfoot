@@ -1,4 +1,4 @@
-"""botpass command-line interface."""
+"""wingfoot command-line interface."""
 from __future__ import annotations
 
 import argparse
@@ -17,7 +17,7 @@ from .verifier import _Colors, demo, start_verifier
 def _require_identity(C) -> Identity:
     identity = load_identity()
     if identity is None:
-        print(f"{C.red}No identity yet.{C.reset} Run `botpass init --agent https://your-bot.example` first.",
+        print(f"{C.red}No identity yet.{C.reset} Run `wingfoot init --agent https://your-bot.example` first.",
               file=sys.stderr)
         raise SystemExit(2)
     return identity
@@ -35,7 +35,7 @@ def cmd_init(args) -> int:
     if not args.agent:
         print(f"\n{C.yellow}Note:{C.reset} using a placeholder directory URL. Re-run with "
               f"`--agent https://your-domain` once you know where you'll host the directory.")
-    print(f"\nNext: `botpass directory` to see the JSON to host, or `botpass demo` to watch it work.")
+    print(f"\nNext: `wingfoot directory` to see the JSON to host, or `wingfoot demo` to watch it work.")
     return 0
 
 
@@ -112,11 +112,11 @@ def _origin(url: str) -> str:
 
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
-        prog="botpass",
+        prog="wingfoot",
         description="Verified-bot identity for AI agents (Web Bot Auth / RFC 9421), "
                     "with a doctor that reports why a request was blocked.",
     )
-    p.add_argument("--version", action="version", version=f"botpass {__version__}")
+    p.add_argument("--version", action="version", version=f"wingfoot {__version__}")
     sub = p.add_subparsers(dest="command", required=True)
 
     s = sub.add_parser("demo", help="run the unsigned/signed flow against a local verifier")

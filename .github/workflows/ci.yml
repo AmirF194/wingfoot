@@ -22,4 +22,4 @@ jobs:
       - name: Test
         run: pytest -q
       - name: Demo smoke test
-        run: botpass demo
+        run: wingfoot demo

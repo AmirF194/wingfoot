@@ -1,4 +1,4 @@
-"""botpass doctor <url>: send a signed request and report whether it worked and why."""
+"""wingfoot doctor <url>: send a signed request and report whether it worked and why."""
 from __future__ import annotations
 
 from typing import Optional
@@ -30,12 +30,12 @@ def doctor(url: str, home=DEFAULT_HOME) -> int:
     if identity is None:
         identity = ephemeral_identity(agent_url=_origin(url))
 
-    print(f"{C.bold}botpass doctor{C.reset} {C.dim}{url}{C.reset}\n")
+    print(f"{C.bold}wingfoot doctor{C.reset} {C.dim}{url}{C.reset}\n")
 
     # 1. Identity
     if ephemeral:
         _check(C, None, "Bot identity",
-               "using a throwaway key (run `botpass init` to create a lasting one)")
+               "using a throwaway key (run `wingfoot init` to create a lasting one)")
     else:
         _check(C, True, "Bot identity",
                f"keyid {identity.keyid[:16]}...  directory at {identity.agent_url}")
@@ -63,7 +63,7 @@ def doctor(url: str, home=DEFAULT_HOME) -> int:
             dir_ok = False
             _check(C, False, "Key directory reachable",
                    f"{dir_url}: {exc}. A verifier cannot fetch your public key. "
-                   f"Host that JSON (see `botpass directory`) or run `botpass serve`.")
+                   f"Host that JSON (see `wingfoot directory`) or run `wingfoot serve`.")
     else:
         _check(C, None, "Key directory",
                "no public directory URL set, so verifiers cannot fetch your key until you host one")
