@@ -9,3 +9,9 @@ __version__ = "0.1.0"
 
 DIRECTORY_PATH = "/.well-known/http-message-signatures-directory"
 WEB_BOT_AUTH_TAG = "web-bot-auth"
+
+# Drop-in signing for requests / httpx. Imported last so the constants above are
+# already defined (integrations -> rfc9421 -> `from . import WEB_BOT_AUTH_TAG`).
+from .integrations import httpx_auth, requests_auth, signed_headers  # noqa: E402
+
+__all__ = ["httpx_auth", "requests_auth", "signed_headers", "__version__"]

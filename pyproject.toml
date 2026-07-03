@@ -22,7 +22,9 @@ classifiers = [
 dependencies = ["cryptography>=41"]
 
 [project.optional-dependencies]
-test = ["pytest>=7"]
+requests = ["requests>=2"]
+httpx = ["httpx>=0.23"]
+test = ["pytest>=7", "requests>=2", "httpx>=0.23"]
 
 [project.urls]
 Homepage = "https://github.com/AmirF194/botpass"
