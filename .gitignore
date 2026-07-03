@@ -15,6 +15,10 @@ venv/
 .botpass/
 *.pem
 
+# Large video render kept out of git history (ship via a GitHub Release instead).
+# The lightweight README hero (media/*.gif) and poster are committed.
+media/*.mp4
+
 # OS / editor
 .DS_Store
 .idea/

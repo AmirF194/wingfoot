@@ -4,6 +4,12 @@
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 ![Python](https://img.shields.io/badge/python-3.9%2B-blue)
 
+<p align="center">
+  <img src="media/botpass-doctor.gif" alt="botpass doctor: a blocked 403 request becomes a verified 200 OK" width="760">
+</p>
+
+<p align="center"><em><code>botpass doctor</code> sends a signed request, reads the response, and tells you why a blocked <code>403</code> becomes a verified <code>200</code>.</em></p>
+
 Verified-bot identity for AI agents, using Web Bot Auth (a profile of
 [RFC 9421](https://www.rfc-editor.org/info/rfc9421/) HTTP Message Signatures).
 
@@ -90,6 +96,24 @@ skew, unreachable directory, key not listed, missing `tag="web-bot-auth"`, and s
 | `botpass doctor <url>` | Diagnose why a URL blocks or accepts your signed agent. |
 | `botpass verifier` | Run a reference verifier for others to test against. |
 
+## Use it in your code
+
+Signing is one line — hand a botpass auth object to the HTTP client you already use. Every
+outbound request gets a fresh Web Bot Auth signature (re-signed per call, so it never expires
+mid-session). Run `botpass init --agent <url>` once, then:
+
+```python
+import requests, botpass
+requests.get("https://example.com/", auth=botpass.requests_auth())
+
+import httpx, botpass
+httpx.get("https://example.com/", auth=botpass.httpx_auth())
+```
+
+`requests` and `httpx` are optional extras (`pip install "botpass[requests]"` /
+`"botpass[httpx]"`); botpass itself needs only `cryptography`. Driving a different client?
+`botpass.signed_headers(url)` returns the headers as a plain dict to merge in yourself.
+
 ## How it works
 
 Web Bot Auth signs at least the `@authority` derived component and a `Signature-Agent` header,
@@ -109,10 +133,13 @@ Alpha (v0.1). Signing, verification, the directory, and doctor work and are cove
 against a reference verifier. Interoperability with a specific CDN depends on that CDN having your
 registered key. Doctor confirms your side is correct so you can register with confidence.
 
+Drop-in signing for `requests` and `httpx` ships now (see
+[Use it in your code](#use-it-in-your-code)).
+
 Planned:
 
 - Doctor checks for Cloudflare and Akamai rejection signals.
-- Middleware for `httpx`, `requests`, and `aiohttp` so signing is one line in an agent.
+- Middleware for `aiohttp`, plus an async `httpx` example.
 - A TypeScript/Node port.
 
 Issues and PRs welcome. See [CONTRIBUTING.md](CONTRIBUTING.md).
