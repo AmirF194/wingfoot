@@ -1,0 +1,35 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "botpass"
+version = "0.1.0"
+description = "Verified-bot identity for AI agents (Web Bot Auth / RFC 9421), with a doctor that reports why a request was blocked."
+readme = "README.md"
+requires-python = ">=3.9"
+license = "MIT"
+authors = [{ name = "AmirF194" }]
+keywords = ["web-bot-auth", "rfc9421", "http-message-signatures", "ai-agents", "crawler", "bot-verification", "cloudflare"]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Intended Audience :: Developers",
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python :: 3",
+  "Topic :: Internet :: WWW/HTTP",
+  "Topic :: Security :: Cryptography",
+]
+dependencies = ["cryptography>=41"]
+
+[project.optional-dependencies]
+test = ["pytest>=7"]
+
+[project.urls]
+Homepage = "https://github.com/AmirF194/botpass"
+Issues = "https://github.com/AmirF194/botpass/issues"
+
+[project.scripts]
+botpass = "botpass.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/botpass"]
