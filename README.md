@@ -29,7 +29,9 @@ pip install wingfoot
 wingfoot demo
 ```
 
-Or without installing anything: `uvx wingfoot demo`.
+Installing it as a standalone CLI tool (e.g. on macOS, where Homebrew blocks global
+`pip3` installs): `uv tool install wingfoot` or `pipx install wingfoot`. Or without
+installing anything: `uvx wingfoot demo`.
 
 Python 3.9+. The only runtime dependency is `cryptography`.
 
