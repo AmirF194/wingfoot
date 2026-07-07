@@ -64,6 +64,9 @@ wingfoot sign https://example.com/
 
 # check why a URL accepts or rejects your signed agent
 wingfoot doctor https://example.com/
+
+# get a ready-to-paste registration packet for Cloudflare, DataDome, ...
+wingfoot register --email you@example.com
 ```
 
 `wingfoot doctor` sends a signed request, reads the response, and prints a checklist:
@@ -84,6 +87,31 @@ $ wingfoot doctor http://localhost:8088/whoami
 When something is wrong it reports which check failed and how to fix it: expired signature, clock
 skew, unreachable directory, key not listed, missing `tag="web-bot-auth"`, and so on.
 
+## Register with verifiers
+
+A valid signature only helps once a verifier (Cloudflare, DataDome, ...) knows your key. None of
+them offer automated registration yet — each runs its own web form with a manual review behind
+it. `wingfoot register` shrinks that step to copy/paste: it first checks your hosted directory
+the way a reviewer would, then prints every answer their forms ask for:
+
+```console
+$ wingfoot register --email you@example.com
+
+Preflight — what a reviewer will check
+  ok   Key directory reachable
+  ok   Directory publishes this key
+  ok   Directory response is signed
+
+Cloudflare — Verified Bots
+  form   https://dash.cloudflare.com/?to=/:account/configurations
+    Bot / agent name          your-bot.example
+    User-Agent                wingfoot/0.1.0 (+https://github.com/AmirF194/wingfoot)
+    Key directory URL         https://your-bot.example/.well-known/http-message-signatures-directory
+    ...
+```
+
+Add `--open` to launch the forms in your browser, or name one provider: `wingfoot register datadome`.
+
 ## Commands
 
 | Command | What it does |
@@ -94,6 +122,7 @@ skew, unreachable directory, key not listed, missing `tag="web-bot-auth"`, and s
 | `wingfoot serve` | Serve your key directory locally (and verify requests). |
 | `wingfoot sign <url>` | Send a Web-Bot-Auth-signed request. |
 | `wingfoot doctor <url>` | Diagnose why a URL blocks or accepts your signed agent. |
+| `wingfoot register [provider]` | Preflight your setup, then print what to paste into each verifier's registration form. |
 | `wingfoot verifier` | Run a reference verifier for others to test against. |
 
 ## Use it in your code

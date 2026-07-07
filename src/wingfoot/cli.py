@@ -10,7 +10,8 @@ from . import http as _http
 from .directory import directory_json
 from .doctor import doctor
 from .keys import Identity, ephemeral_identity, generate_private_key, load_identity, save_identity
-from .rfc9421 import sign_request
+from .register import PROVIDERS, register
+from .rfc9421 import sign_directory, sign_request
 from .verifier import _Colors, demo, start_verifier
 
 
@@ -40,8 +41,22 @@ def cmd_init(args) -> int:
 
 
 def cmd_directory(args) -> int:
-    identity = _require_identity(_Colors())
+    C = _Colors()
+    identity = _require_identity(C)
     print(directory_json([identity.jwk]))
+    if args.sign:
+        if not identity.agent_url.startswith("http"):
+            print(f"\n{C.yellow}Can't sign:{C.reset} no public directory URL. "
+                  f"Re-run `wingfoot init --agent https://your-domain` first.", file=sys.stderr)
+            return 2
+        dir_url = identity.agent_url.rstrip("/") + DIRECTORY_PATH
+        signed = sign_directory(dir_url, identity.private_key, identity.keyid)
+        print(f"\n{C.dim}# Serve the JSON above with these response headers and "
+              f"Content-Type: application/http-message-signatures-directory+json{C.reset}")
+        print(f"{C.dim}# Verifiers (e.g. Cloudflare) require this signature. "
+              f"Valid until epoch {signed.expires}; re-run before then to refresh.{C.reset}")
+        for k, v in signed.headers.items():
+            print(f"{k}: {v}")
     return 0
 
 
@@ -105,6 +120,13 @@ def cmd_demo(args) -> int:
     return 0 if demo() else 1
 
 
+def cmd_register(args) -> int:
+    C = _Colors()
+    identity = _require_identity(C)
+    return register(identity, args.provider, email=args.email, user_agent=args.user_agent,
+                    open_browser=args.open, skip_checks=args.no_check)
+
+
 def _origin(url: str) -> str:
     p = urlsplit(url)
     return f"{p.scheme}://{p.netloc}"
@@ -127,6 +149,8 @@ def build_parser() -> argparse.ArgumentParser:
     s.set_defaults(func=cmd_init)
 
     s = sub.add_parser("directory", help="print the JWKS to host at the well-known path")
+    s.add_argument("--sign", action="store_true",
+                   help="also print the signed response headers verifiers require")
     s.set_defaults(func=cmd_directory)
 
     s = sub.add_parser("serve", help="serve your key directory (and verify) locally")
@@ -146,6 +170,16 @@ def build_parser() -> argparse.ArgumentParser:
     s = sub.add_parser("doctor", help="diagnose why a URL blocks (or accepts) your signed agent")
     s.add_argument("url")
     s.set_defaults(func=cmd_doctor)
+
+    s = sub.add_parser("register",
+                       help="print a ready-to-paste registration packet for each verifier program")
+    s.add_argument("provider", nargs="?", choices=[p.slug for p in PROVIDERS],
+                   help="only this provider (default: all)")
+    s.add_argument("--email", help="contact email to include in the packet")
+    s.add_argument("--user-agent", help="your bot's User-Agent, if not wingfoot's default")
+    s.add_argument("--open", action="store_true", help="also open the form in your browser")
+    s.add_argument("--no-check", action="store_true", help="skip the live directory preflight")
+    s.set_defaults(func=cmd_register)
 
     return p
 

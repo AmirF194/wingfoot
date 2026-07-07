@@ -6,7 +6,7 @@ from typing import Optional
 from . import http as _http
 from .directory import directory_url_for, find_key
 from .keys import DEFAULT_HOME, ephemeral_identity, load_identity
-from .rfc9421 import sign_request, verify_request
+from .rfc9421 import sign_request, verify_directory, verify_request
 from .verifier import _Colors
 
 
@@ -49,16 +49,28 @@ def doctor(url: str, home=DEFAULT_HOME) -> int:
     _check(C, self_result.ok, "Signature is well-formed and cryptographically valid",
            self_result.reason if not self_result.ok else "signing is correct per RFC 9421")
 
-    # 3. Directory reachability
+    # 3. Directory reachability + the directory's own signature
     dir_ok: Optional[bool] = None
     if identity.agent_url.startswith("http"):
         dir_url = directory_url_for(identity.agent_url)
         try:
-            jwks = _http.fetch_json(dir_url)
+            resp = _http.request(dir_url)
+            if resp.status != 200:
+                raise OSError(f"returned HTTP {resp.status}")
+            jwks = resp.json()
+            if not isinstance(jwks, dict):
+                raise ValueError("did not return a JWKS document")
             found = find_key(jwks, identity.keyid) is not None
             dir_ok = found
             _check(C, found, "Key directory reachable and publishes this key",
                    dir_url if found else f"reachable, but your keyid is not listed at {dir_url}")
+            # The directory response must carry its own signature (draft §5.2);
+            # verifiers such as Cloudflare reject an unsigned directory.
+            dsig = verify_directory(dir_url, resp.headers,
+                                    resolve_key=lambda kid, agent: find_key(jwks, kid))
+            _check(C, dsig.ok, "Directory response is signed",
+                   "verifiers can trust it" if dsig.ok
+                   else f"{dsig.reason}. Run `wingfoot directory --sign` and serve those headers.")
         except Exception as exc:
             dir_ok = False
             _check(C, False, "Key directory reachable",
@@ -101,8 +113,8 @@ def doctor(url: str, home=DEFAULT_HOME) -> int:
         print(f"{C.yellow}Your signature is valid and your key is published, but "
               f"{_origin(url)} still returned {signed_resp.status}.{C.reset}")
         print(f"  {C.dim}Most likely the target does not support Web Bot Auth yet, or has not "
-              f"allow-listed your key. Next: confirm it supports Web Bot Auth and register your "
-              f"directory ({identity.agent_url}) with them.{C.reset}")
+              f"allow-listed your key. Next: run `wingfoot register` for a ready-to-paste "
+              f"registration packet for each verifier program.{C.reset}")
     else:
         print(f"{C.red}Blocked, and your local setup has a problem above. Fix that first.{C.reset}")
     return 1

@@ -19,11 +19,16 @@ from urllib.parse import urlsplit
 from cryptography.exceptions import InvalidSignature
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey
 
-from . import WEB_BOT_AUTH_TAG
+from . import DIRECTORY_TAG, WEB_BOT_AUTH_TAG
 
 # The covered components for a Web Bot Auth signature, in signing order.
 COVERED_COMPONENTS = ("@authority", "signature-agent")
 DEFAULT_LABEL = "sig1"
+# A directory signature (draft §5.2) is a *response* signature that binds the
+# *request's* @authority, so the component carries the `;req` parameter. Default
+# label is "binding0" (binding<N>, one per key), matching Cloudflare's tooling.
+DIRECTORY_LABEL = "binding0"
+DIRECTORY_LIFETIME = 365 * 24 * 3600  # long-lived: pre-sign offline, keep the key out of the server
 _DEFAULT_PORTS = {"http": 80, "https": 443, "ws": 80, "wss": 443}
 
 
@@ -93,6 +98,71 @@ def sign_request(
         "Signature": f"{label}=:{base64.b64encode(signature).decode('ascii')}:",
     }
     return SignedHeaders(headers, base, keyid, created, expires)
+
+
+# ---------------------------------------------------------------------------
+# Directory signing (RFC 9421 HTTP Message Signatures Directory draft §5.2)
+#
+# The key directory response carries its own signature so a verifier can confirm
+# the directory is served by whoever controls the keys (and can't be mirrored).
+# The signature covers only the request's `@authority` (with `;req`), so it does
+# not depend on the response body and can be pre-computed offline: sign once with
+# a long lifetime and serve the fixed Signature-Input / Signature headers, keeping
+# the private key off the server that hosts the directory.
+# ---------------------------------------------------------------------------
+
+
+def _directory_params_value(created: int, expires: int, keyid: str) -> str:
+    """The @signature-params value for a directory signature (also Signature-Input body)."""
+    return (
+        f'("@authority";req);created={created};keyid="{keyid}"'
+        f';alg="ed25519";expires={expires};tag="{DIRECTORY_TAG}"'
+    )
+
+
+def build_directory_signature_base(authority: str, params_value: str) -> str:
+    """The exact bytes signed for a directory response, per RFC 9421 §2.5.
+
+    `@authority` carries `;req` because this is a response signature binding the
+    authority of the request that fetched the directory.
+    """
+    return f'"@authority";req: {authority}\n"@signature-params": {params_value}'
+
+
+@dataclass
+class SignedDirectory:
+    headers: dict
+    signature_base: str
+    keyid: str
+    created: int
+    expires: int
+
+
+def sign_directory(
+    directory_url: str,
+    private_key,
+    keyid: str,
+    *,
+    created: Optional[int] = None,
+    lifetime: int = DIRECTORY_LIFETIME,
+    label: str = DIRECTORY_LABEL,
+) -> SignedDirectory:
+    """Produce the Signature-Input / Signature response headers for a key directory.
+
+    Serve these alongside the JWKS body (with the directory content-type). The
+    signature is over `@authority` only, so it stays valid as long as the host and
+    the timestamps hold — pre-sign offline and refresh before ``expires``.
+    """
+    created = int(created if created is not None else time.time())
+    expires = created + lifetime
+    params_value = _directory_params_value(created, expires, keyid)
+    base = build_directory_signature_base(authority_of(directory_url), params_value)
+    signature = private_key.sign(base.encode("utf-8"))
+    headers = {
+        "Signature-Input": f"{label}={params_value}",
+        "Signature": f"{label}=:{base64.b64encode(signature).decode('ascii')}:",
+    }
+    return SignedDirectory(headers, base, keyid, created, expires)
 
 
 # ---------------------------------------------------------------------------
@@ -244,3 +314,42 @@ def verify_request(
     add("cryptographic signature valid", True)
 
     return VerifyResult(True, "verified", keyid=parsed.keyid, checks=checks)
+
+
+def verify_directory(
+    directory_url: str,
+    headers: Mapping[str, str],
+    resolve_key: KeyResolver,
+    *,
+    now: Optional[int] = None,
+) -> VerifyResult:
+    """Verify the signature on a key directory response (draft §5.2).
+
+    ``directory_url`` is the URL the directory was fetched from; its ``@authority``
+    is what the signature binds. Handles a single ``binding`` signature (one key).
+    """
+    now = int(now if now is not None else time.time())
+    try:
+        parsed = parse_signature(headers)
+    except ValueError as exc:
+        return VerifyResult(False, f"directory is unsigned or malformed: {exc}")
+
+    if parsed.tag != DIRECTORY_TAG:
+        return VerifyResult(False, f'directory tag must be "{DIRECTORY_TAG}", got {parsed.tag!r}',
+                            keyid=parsed.keyid)
+    if parsed.expires is not None and now > parsed.expires:
+        return VerifyResult(False, f"directory signature expired {now - parsed.expires}s ago",
+                            keyid=parsed.keyid)
+    if not parsed.keyid:
+        return VerifyResult(False, "no keyid in directory signature")
+
+    public_key = resolve_key(parsed.keyid, directory_url)
+    if public_key is None:
+        return VerifyResult(False, "could not resolve the directory's own key", keyid=parsed.keyid)
+
+    base = build_directory_signature_base(authority_of(directory_url), parsed.params_value)
+    try:
+        public_key.verify(parsed.signature, base.encode("utf-8"))
+    except InvalidSignature:
+        return VerifyResult(False, "directory signature did not verify", keyid=parsed.keyid)
+    return VerifyResult(True, "directory signature valid", keyid=parsed.keyid)

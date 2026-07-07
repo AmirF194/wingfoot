@@ -6,6 +6,14 @@ import urllib.error
 import urllib.request
 from dataclasses import dataclass
 
+from . import __version__
+
+# urllib's default User-Agent ("Python-urllib/x.y") is blocked outright by many
+# CDNs (Cloudflare, Akamai) as an unidentified bot — which would make a
+# verified-bot tool fail before it even gets to prove its identity. Send a
+# descriptive UA instead; callers can override it via the `headers` argument.
+DEFAULT_USER_AGENT = f"wingfoot/{__version__} (+https://github.com/AmirF194/wingfoot)"
+
 
 @dataclass
 class Response:
@@ -27,7 +35,10 @@ class Response:
 def request(url: str, *, method: str = "GET", headers: dict | None = None,
             timeout: float = 10.0) -> Response:
     """Send a request, returning a Response even for 4xx/5xx (no exception)."""
-    req = urllib.request.Request(url, method=method, headers=headers or {})
+    hdrs = dict(headers or {})
+    if not any(k.lower() == "user-agent" for k in hdrs):
+        hdrs["User-Agent"] = DEFAULT_USER_AGENT
+    req = urllib.request.Request(url, method=method, headers=hdrs)
     try:
         with urllib.request.urlopen(req, timeout=timeout) as resp:
             return Response(resp.status, dict(resp.headers), resp.read())
