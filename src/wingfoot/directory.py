@@ -35,9 +35,21 @@ def directory_url_for(agent_url: str) -> str:
 
 
 def find_key(jwks_doc: dict, keyid: str) -> Optional[object]:
-    """Return the Ed25519 public key for ``keyid`` from a JWKS, or None."""
+    """Return the Ed25519 public key for ``keyid`` from a JWKS, or None.
+
+    A directory may legitimately publish several keys of different types (e.g. an
+    RSA or EC key alongside Ed25519, or extra keys during rotation). Those entries
+    are skipped rather than allowed to break the lookup: computing the thumbprint of
+    a non-OKP JWK would raise ``KeyError`` on its missing members.
+    """
     for jwk in jwks_doc.get("keys", []):
-        if jwk.get("kid") == keyid or jwk_thumbprint(jwk) == keyid:
+        if not isinstance(jwk, dict):
+            continue
+        try:
+            matches = jwk.get("kid") == keyid or jwk_thumbprint(jwk) == keyid
+        except (KeyError, TypeError):
+            continue  # not an OKP JWK (missing crv/kty/x) — can't be our Ed25519 key
+        if matches:
             try:
                 return public_key_from_jwk(jwk)
             except ValueError:
