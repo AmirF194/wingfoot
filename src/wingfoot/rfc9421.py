@@ -274,7 +274,16 @@ def verify_request(
                             keyid=parsed.keyid, checks=checks)
     add("tag is web-bot-auth", True)
 
-    if parsed.expires is not None and now > parsed.expires:
+    # Web Bot Auth signatures are short-lived and MUST carry an expiry; a signature
+    # with no `expires` would otherwise verify forever and be replayable indefinitely.
+    if parsed.expires is None:
+        add("signature not expired", False, "no expires parameter")
+        return VerifyResult(False, "signature has no expires (web-bot-auth requires one)",
+                            keyid=parsed.keyid, checks=checks)
+    # Allow `max_skew` past the stated expiry, mirroring the tolerance on `created`
+    # below, so a verifier whose clock runs fast doesn't reject still-valid
+    # signatures (RFC 9421 §3.2.1).
+    if now > parsed.expires + max_skew:
         add("signature not expired", False, f"expired {now - parsed.expires}s ago")
         return VerifyResult(False, f"signature expired {now - parsed.expires}s ago",
                             keyid=parsed.keyid, checks=checks)
