@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import argparse
 import sys
+import urllib.error
 from urllib.parse import urlsplit
 
 from . import DIRECTORY_PATH, __version__
@@ -102,7 +103,13 @@ def cmd_sign(args) -> int:
         for k, v in signed.headers.items():
             print(f"{k}: {v}")
         return 0
-    resp = _http.request(args.url, method=args.method, headers=signed.headers)
+    try:
+        resp = _http.request(args.url, method=args.method, headers=signed.headers)
+    except urllib.error.URLError as exc:
+        # A connection failure (DNS, refused, timeout) has no HTTP status, so
+        # `http.request` lets it through. Report it cleanly instead of a traceback.
+        print(f"{C.red}Could not reach {args.url}{C.reset}: {exc.reason}", file=sys.stderr)
+        return 1
     color = C.green if 200 <= resp.status < 300 else C.red
     print(f"{color}HTTP {resp.status}{C.reset}")
     for k, v in signed.headers.items():
