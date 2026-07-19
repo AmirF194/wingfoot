@@ -7,11 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.2] - 2026-07-19
+
 ### Added
 
 - Ship a PEP 561 `py.typed` marker so downstream type checkers (mypy, pyright)
   read wingfoot's type hints instead of treating the package as untyped. ([#5])
-- This changelog, a security policy, and issue / pull-request templates.
 
 ### Fixed
 
@@ -26,6 +27,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   verify. ([#3])
 - `find_key` no longer crashes when the key directory (JWKS) contains entries
   that are not Ed25519; non-matching keys are skipped. ([#2])
+
+### Documentation
+
+- Add a security policy (`SECURITY.md`), this changelog, and issue /
+  pull-request templates.
 
 ## [0.1.1] - 2026-07-07
 
@@ -66,7 +72,8 @@ Initial release.
   outright.
 - Publish to PyPI on GitHub Release via Trusted Publishing (OIDC).
 
-[Unreleased]: https://github.com/AmirF194/wingfoot/compare/v0.1.1...HEAD
+[Unreleased]: https://github.com/AmirF194/wingfoot/compare/v0.1.2...HEAD
+[0.1.2]: https://github.com/AmirF194/wingfoot/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/AmirF194/wingfoot/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/AmirF194/wingfoot/releases/tag/v0.1.0
 [#2]: https://github.com/AmirF194/wingfoot/pull/2

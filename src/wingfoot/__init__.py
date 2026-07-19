@@ -5,7 +5,7 @@ agent's outbound requests with an Ed25519 key, publish the public key at a `.wel
 directory, and diagnose why a site blocked a signed request.
 """
 
-__version__ = "0.1.1"
+__version__ = "0.1.2"
 
 DIRECTORY_PATH = "/.well-known/http-message-signatures-directory"
 WEB_BOT_AUTH_TAG = "web-bot-auth"
