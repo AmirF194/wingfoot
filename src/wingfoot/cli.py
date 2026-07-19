@@ -10,7 +10,14 @@ from . import DIRECTORY_PATH, __version__
 from . import http as _http
 from .directory import directory_json
 from .doctor import doctor
-from .keys import Identity, ephemeral_identity, generate_private_key, load_identity, save_identity
+from .keys import (
+    Identity,
+    IdentityError,
+    ephemeral_identity,
+    generate_private_key,
+    load_identity,
+    save_identity,
+)
 from .register import PROVIDERS, register
 from .rfc9421 import sign_directory, sign_request
 from .verifier import _Colors, demo, start_verifier
@@ -205,6 +212,10 @@ def main(argv=None) -> int:
         return args.func(args)
     except KeyboardInterrupt:
         return 130
+    except IdentityError as exc:
+        C = _Colors()
+        print(f"{C.red}wingfoot:{C.reset} {exc}", file=sys.stderr)
+        return 2
 
 
 if __name__ == "__main__":

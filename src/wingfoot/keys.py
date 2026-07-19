@@ -72,6 +72,14 @@ def keyid_for(public_key: Ed25519PublicKey) -> str:
 DEFAULT_HOME = Path.home() / ".wingfoot"
 
 
+class IdentityError(ValueError):
+    """A stored identity exists but can't be loaded (corrupt key or config).
+
+    Subclasses ``ValueError`` so existing ``except ValueError`` handlers keep
+    working; the CLI catches it to print a clean message instead of a traceback.
+    """
+
+
 @dataclass
 class Identity:
     private_key: Ed25519PrivateKey
@@ -107,15 +115,31 @@ def save_identity(identity: Identity, home: Path = DEFAULT_HOME) -> Path:
 
 
 def load_identity(home: Path = DEFAULT_HOME) -> Identity | None:
+    """Load the persisted identity, or ``None`` if none has been created.
+
+    Raises :class:`IdentityError` (with a re-run hint) when an identity exists but
+    is unreadable — a corrupt key file, a truncated/edited ``config.json``, or a
+    missing ``agent_url`` — so callers get an actionable message, not a raw
+    ``JSONDecodeError``/``KeyError``.
+    """
     key_path = home / "private_key.pem"
     config_path = home / "config.json"
     if not key_path.exists() or not config_path.exists():
         return None
-    private_key = serialization.load_pem_private_key(key_path.read_bytes(), password=None)
+    try:
+        private_key = serialization.load_pem_private_key(key_path.read_bytes(), password=None)
+    except ValueError as exc:
+        raise IdentityError(f"private key in {home} is unreadable ({exc}); re-run `wingfoot init`") from exc
     if not isinstance(private_key, Ed25519PrivateKey):
-        raise ValueError("stored key is not an Ed25519 private key")
-    config = json.loads(config_path.read_text())
-    return Identity(private_key=private_key, agent_url=config["agent_url"])
+        raise IdentityError(f"stored key in {home} is not an Ed25519 private key; re-run `wingfoot init`")
+    try:
+        config = json.loads(config_path.read_text())
+        agent_url = config["agent_url"]
+    except (json.JSONDecodeError, KeyError, TypeError) as exc:
+        raise IdentityError(
+            f"identity config {config_path} is corrupt or incomplete ({exc}); re-run `wingfoot init`"
+        ) from exc
+    return Identity(private_key=private_key, agent_url=agent_url)
 
 
 def ephemeral_identity(agent_url: str) -> Identity:
