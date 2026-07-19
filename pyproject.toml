@@ -18,6 +18,7 @@ classifiers = [
   "Programming Language :: Python :: 3",
   "Topic :: Internet :: WWW/HTTP",
   "Topic :: Security :: Cryptography",
+  "Typing :: Typed",
 ]
 dependencies = ["cryptography>=41"]
 
