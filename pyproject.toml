@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "wingfoot"
-version = "0.1.1"
+version = "0.1.2"
 description = "Verified-bot identity for AI agents (Web Bot Auth / RFC 9421), with a doctor that reports why a request was blocked."
 readme = "README.md"
 requires-python = ">=3.9"

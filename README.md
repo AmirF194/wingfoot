@@ -105,7 +105,7 @@ Preflight — what a reviewer will check
 Cloudflare — Verified Bots
   form   https://dash.cloudflare.com/?to=/:account/configurations
     Bot / agent name          your-bot.example
-    User-Agent                wingfoot/0.1.1 (+https://github.com/AmirF194/wingfoot)
+    User-Agent                wingfoot/0.1.2 (+https://github.com/AmirF194/wingfoot)
     Key directory URL         https://your-bot.example/.well-known/http-message-signatures-directory
     ...
 ```
